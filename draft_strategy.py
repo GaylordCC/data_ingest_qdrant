@@ -150,11 +150,20 @@ def meta_search():
     qdrant_client = Qdrant(collection_name='garyn_collection', client=client, embeddings=OpenAIEmbeddings())
 
     # Define the metadata filter
-    metadata_filter = Filter(
+    simple_filter = Filter(
         must=[
             FieldCondition(
-                key="metadata_type",
+                key="metadata.metadata_type",
                 match=MatchValue(value="oppponent_team_stats")
+            )
+        ]
+    )
+
+    filter2 = models.Filter(
+        should=[
+            models.FieldCondition(
+                key="metadata.metadata_type",
+                match=models.MatchValue(value="oppponent_team_stats"),
             )
         ]
     )
@@ -163,9 +172,12 @@ def meta_search():
     # doc_found = qdrant_client.similarity_search_with_score(query=query, metadata_filter=metadata_filter)
     found_docs = qdrant_client.similarity_search_with_score(
         query=query,
-        filter=metadata_filter,
+        filter=filter2,
     )
-    print(found_docs)
+    print("****************************************************************************************")
+    for doc, score in found_docs:
+        print(f"Document: {doc.page_content}, Score: {score}")
+        print(f"Metadata: {doc.metadata}")
 
 # text_splitter, documents = create_chunk()
 # add_document_with_metadata(text_splitter, documents)
