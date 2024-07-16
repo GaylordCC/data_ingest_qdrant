@@ -10,6 +10,8 @@ from langchain_qdrant import RetrievalMode
 
 import os
 
+from qdrant_client import QdrantClient
+
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 
@@ -22,7 +24,8 @@ FAST_API_ENV = os.getenv("FAST_API_ENV")
 
 collection = "draft_strategy_data_v2"
 
-openai_api_jey = os.getenv("OPENAI_API_KEY")
+# openai_api_jey = os.getenv("OPENAI_API_KEY")
+openai_api_jey = "2ec6eea226eb409996e02532fb49142e"
 
 def azure_openai_embeddings():
     embeddings = AzureOpenAIEmbeddings(
@@ -82,4 +85,13 @@ def load_data_from_file():
     print({ "found_docs": document.page_content, "score": score})
 
 
-load_data_from_file()
+def search_similar():
+    url = f"{QDRANT_URL_PROTOCOL}{QDRANT_HOST}:{QDRANT_HOST_PORT}"
+    client = QdrantClient(url=url)
+    qdrant_client = Qdrant(collection_name=collection, client=client, embeddings=OpenAIEmbeddings())
+    doc_found = qdrant_client.similarity_search_with_score("Where are the international office of the NFL?")
+    print(doc_found)
+
+# load_data_from_file()
+
+search_similar()
