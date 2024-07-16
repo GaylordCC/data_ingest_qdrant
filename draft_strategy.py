@@ -110,35 +110,64 @@ def create_chunk():
     return text_splitter, documents
 
 
-text_splitter, documents = create_chunk()
+def add_document_with_metadata(text_splitter, documents):
+    from langchain.schema import Document
 
+    oppponent_team_stats_docs  = []
 
-from langchain.schema import Document
-oppponent_team_stats_docs  = []
-
-for doc in text_splitter.split_documents(documents):
-    print(doc)
-    breakpoint()
-    oppponent_team_stats_docs.append(
-        Document(
-            page_content=doc.page_content,
-            metadata={
-                "metadata_type": "oppponent_team_stats",
-                "source": doc.metadata['source'],
-            },
+    for doc in text_splitter.split_documents(documents):
+        print(doc)
+        breakpoint()
+        oppponent_team_stats_docs.append(
+            Document(
+                page_content=doc.page_content,
+                metadata={
+                    "metadata_type": "oppponent_team_stats",
+                    "source": doc.metadata['source'],
+                },
+            )
         )
+        
+        print("*****************")
+        print("\n")
+
+    url=f"{QDRANT_URL_PROTOCOL}{QDRANT_HOST}:{QDRANT_HOST_PORT}"
+    embeddings = OpenAIEmbeddings()
+
+    qdrant = QdrantVectorStore.from_documents(
+        oppponent_team_stats_docs,
+        embedding=embeddings,
+        url=url,
+        collection_name='garyn_collection',
     )
-    
-    print("*****************")
-    print("\n")
 
-url=f"{QDRANT_URL_PROTOCOL}{QDRANT_HOST}:{QDRANT_HOST_PORT}"
-embeddings = OpenAIEmbeddings()
+def meta_search():
+    from qdrant_client.http.models import Filter, FieldCondition, MatchValue
+    from qdrant_client import QdrantClient, models
 
-qdrant = QdrantVectorStore.from_documents(
-    oppponent_team_stats_docs,
-    embedding=embeddings,
-    url=url,
-    collection_name='garyn_collection',
-)
+    url = f"{QDRANT_URL_PROTOCOL}{QDRANT_HOST}:{QDRANT_HOST_PORT}"
+    client = QdrantClient(url=url)
+    qdrant_client = Qdrant(collection_name='garyn_collection', client=client, embeddings=OpenAIEmbeddings())
+
+    # Define the metadata filter
+    metadata_filter = Filter(
+        must=[
+            FieldCondition(
+                key="metadata_type",
+                match=MatchValue(value="oppponent_team_stats")
+            )
+        ]
+    )
+
+    query = "What are some key elements of the NFL's model for a successful modern sports league, and how has the league expanded both nationally and internationally?"
+    # doc_found = qdrant_client.similarity_search_with_score(query=query, metadata_filter=metadata_filter)
+    found_docs = qdrant_client.similarity_search_with_score(
+        query=query,
+        filter=metadata_filter,
+    )
+    print(found_docs)
+
+# text_splitter, documents = create_chunk()
+# add_document_with_metadata(text_splitter, documents)
+meta_search()
 # search_similar()
