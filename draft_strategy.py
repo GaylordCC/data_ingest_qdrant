@@ -159,7 +159,7 @@ def meta_search():
         ]
     )
 
-    filter2 = models.Filter(
+    other_simple_filter = models.Filter(
         should=[
             models.FieldCondition(
                 key="metadata.metadata_type",
@@ -172,7 +172,7 @@ def meta_search():
     # doc_found = qdrant_client.similarity_search_with_score(query=query, metadata_filter=metadata_filter)
     found_docs = qdrant_client.similarity_search_with_score(
         query=query,
-        filter=filter2,
+        filter=other_simple_filter,
     )
     print("****************************************************************************************")
     for doc, score in found_docs:
