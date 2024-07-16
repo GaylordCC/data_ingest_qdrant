@@ -94,4 +94,51 @@ def search_similar():
 
 # load_data_from_file()
 
-search_similar()
+def create_chunk():
+    file="./nfl_description.txt"
+    if file.endswith(".txt"):
+        loader = TextLoader(file, encoding="utf-8")
+    elif file.endswith(".pdf"):
+        loader = PyMuPDFLoader(file)
+    else:
+        raise ValueError(
+            "Unsupported file type. Currently only support .txt and .pdf files"
+        )
+
+    documents = loader.load()
+    text_splitter = CharacterTextSplitter(chunk_size=300, chunk_overlap=50)
+    return text_splitter, documents
+
+
+text_splitter, documents = create_chunk()
+
+
+from langchain.schema import Document
+oppponent_team_stats_docs  = []
+
+for doc in text_splitter.split_documents(documents):
+    print(doc)
+    breakpoint()
+    oppponent_team_stats_docs.append(
+        Document(
+            page_content=doc.page_content,
+            metadata={
+                "metadata_type": "oppponent_team_stats",
+                "source": doc.metadata['source'],
+            },
+        )
+    )
+    
+    print("*****************")
+    print("\n")
+
+url=f"{QDRANT_URL_PROTOCOL}{QDRANT_HOST}:{QDRANT_HOST_PORT}"
+embeddings = OpenAIEmbeddings()
+
+qdrant = QdrantVectorStore.from_documents(
+    oppponent_team_stats_docs,
+    embedding=embeddings,
+    url=url,
+    collection_name='garyn_collection',
+)
+# search_similar()
